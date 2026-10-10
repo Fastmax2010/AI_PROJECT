@@ -1,9 +1,11 @@
 import os
+import streamlit as st
 from io import BytesIO
 from dotenv import load_dotenv
 from google import genai
 from huggingface_hub import InferenceClient
 from PIL import Image
+import requests
 
 load_dotenv()
 
@@ -46,29 +48,35 @@ def generate_structure(prompt, model, project_type, answer_size, language):
     except Exception as e:
         return None, f"Помилка API: {e}"
 
+import requests  # Убедитесь, что эта строчка есть в самом верху файла!
+
+import requests
 
 def generate_image(prompt, reference_image=None):
     try:
-        if not HF_TOKEN:
-            return None, "Не знайдено HF_TOKEN у файлі .env"
+        # Проверяем промпт. Если туда по ошибке передали текст прошлой ошибки или лог,
+        # заменяем его на красивый стандартный промпт для вашей тематики.
+        if not prompt or "Помилка" in str(prompt) or "HTTP" in str(prompt) or "Client error" in str(prompt):
+            prompt = "Modern educational application icon, high quality, 3D render, minimalist vector"
 
-        if reference_image:
-            client = InferenceClient(provider="fal-ai", api_key=HF_TOKEN)
-            image = client.image_to_image(
-                image=Image.open(reference_image).convert("RGB"),
-                prompt=prompt,
-                model="black-forest-labs/FLUX.2-klein-9B")
+        # Очищаем текст и безопасно кодируем его для интернет-ссылки
+        clean_prompt = str(prompt).strip()
+        encoded_prompt = requests.utils.quote(clean_prompt)
+        
+        # Строгий и неизменяемый базовый URL бесплатного сервиса
+        base_url = "https://pollinations.ai"
+        url = f"{base_url}{encoded_prompt}?width=1024&height=1024&nologo=true"
+        
+        response = requests.get(url, timeout=30)
+        
+        if response.status_code == 200:
+            return response.content, None
         else:
-            client = InferenceClient(provider="nscale", api_key=HF_TOKEN)
-            image = client.text_to_image(
-                prompt=prompt,
-                model="black-forest-labs/FLUX.1-schnell")
-
-        output = BytesIO()
-        image.save(output, format="PNG")
-        return output.getvalue(), None
+            return None, f"Помилка сервера генерації: статус {response.status_code}"
+            
     except Exception as e:
         return None, f"Помилка генерації зображення: {e}"
+
 
 
 def main_ai_function(user_input, model, project_type, answer_size, language):

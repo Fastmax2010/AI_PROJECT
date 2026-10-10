@@ -69,10 +69,11 @@ with tab3:
         if not image_prompt.strip():
             st.warning("Введи опис зображення.")
         else:
-            with st.spinner("Hugging Face генерує зображення..."):
-                image_bytes, error = generate_image(image_prompt, reference_image)
-            if error:
-                st.error(error)
+            with st.spinner("Генерація зображення..."):
+                image_bytes, img_error = generate_image(image_prompt, reference_image)
+            
+            if img_error:
+                st.error(img_error)
             else:
                 st.session_state["last_image"] = image_bytes
 
