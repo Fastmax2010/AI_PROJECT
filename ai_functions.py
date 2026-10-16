@@ -48,43 +48,51 @@ def generate_structure(prompt, model, project_type, answer_size, language):
     except Exception as e:
         return None, f"Помилка API: {e}"
 
-import requests  # Убедитесь, что эта строчка есть в самом верху файла!
-
-import requests
-
 def generate_image(prompt, reference_image=None):
     try:
-        # Проверяем промпт. Если туда по ошибке передали текст прошлой ошибки или лог,
-        # заменяем его на красивый стандартный промпт для вашей тематики.
-        if not prompt or "Помилка" in str(prompt) or "HTTP" in str(prompt) or "Client error" in str(prompt):
-            prompt = "Modern educational application icon, high quality, 3D render, minimalist vector"
+        if st.session_state.get("model", "Gemini") == "Gemini":
+            encoded_prompt = requests.utils.quote(prompt)
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed=42"
 
-        # Очищаем текст и безопасно кодируем его для интернет-ссылки
-        clean_prompt = str(prompt).strip()
-        encoded_prompt = requests.utils.quote(clean_prompt)
-        
-        # Строгий и неизменяемый базовый URL бесплатного сервиса
-        base_url = "https://pollinations.ai"
-        url = f"{base_url}{encoded_prompt}?width=1024&height=1024&nologo=true"
-        
-        response = requests.get(url, timeout=30)
-        
+            response = requests.get(url, timeout=45)
+
+            if response.status_code == 200:
+                return response.content, None
+            else:
+                return None, f"Сервіс тимчасово недоступний: ({response.status_code})"
+
+        encoded_prompt = requests.utils.quote(prompt)
+        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed=42"
+
+        response = requests.get(url, timeout=45)
+
         if response.status_code == 200:
             return response.content, None
         else:
-            return None, f"Помилка сервера генерації: статус {response.status_code}"
-            
-    except Exception as e:
-        return None, f"Помилка генерації зображення: {e}"
+            return None, f"Сервіс тимчасово недоступний: ({response.status_code})"
 
+    except requests.exceptions.Timeout:
+        return None, "Time-Out"
+    except Exception as e:
+        return None, f"Помилка підключення: {e}"
 
 
 def main_ai_function(user_input, model, project_type, answer_size, language):
-    return generate_structure(user_input, model, project_type, answer_size, language)
+    return generate_structure(
+        user_input,
+        model,
+        project_type,
+        answer_size,
+        language
+    )
 
 
 if __name__ == "__main__":
-    result, error = main_ai_function("Застосунок для навчання", "Gemini", "Вебзастосунок", "Коротка")
+    result, error = generate_structure("Застосунок для навчання",
+                                        "Gemini",
+                                        "Вебзастосунок",
+                                        "Коротка",
+                                        "Українська")
     if error:
         print(f"Помилка: {error}")
     else:

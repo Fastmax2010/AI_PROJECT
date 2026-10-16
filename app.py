@@ -25,7 +25,7 @@ with tab1:
 
 with tab2:
     st.title("Моделі штучного інтелекту") 
-    model = st.selectbox("Обери AI-модель", ["Gemini", "Hugging Face"]) 
+    model = st.selectbox("Обери AI-модель",["Gemini", "Hugging Face"], key="model") 
     st.subheader(f"Обрана модель: {model}") 
     if model == "Gemini": 
         st.write(f"{model} - це передовий мультимодальний штучний інтелект від Google, який здатен одночасно розуміти, аналізувати та створювати текст, код, зображення, аудіо та відео.") 
